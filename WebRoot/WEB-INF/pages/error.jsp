@@ -21,6 +21,6 @@
 </head>
 
 <body>
-${info}
+${msg}
 </body>
 </html>
