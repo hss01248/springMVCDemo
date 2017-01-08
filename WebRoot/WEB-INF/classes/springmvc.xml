@@ -70,10 +70,10 @@
 			<mvc:mapping path="/**"/>
 			<bean class="com.hss01248.springdemo.intercetor.LogInterceptor"/>
 		</mvc:interceptor>
-		<mvc:interceptor>
+		<!--<mvc:interceptor>
 			<mvc:mapping path="/**"/>
 			<bean class="com.hss01248.springdemo.intercetor.AuthInterceptor"/>
-		</mvc:interceptor>
+		</mvc:interceptor>-->
 		<mvc:interceptor>
 			<mvc:mapping path="/**"/>
 			<bean class="com.hss01248.springdemo.intercetor.HttpHeaderInterceptor"/>
