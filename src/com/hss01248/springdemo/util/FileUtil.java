@@ -13,11 +13,11 @@ import java.net.URLConnection;
  */
 public class FileUtil {
 
-    public static void downloadFile(String urlString, String imageName)
+    public static boolean downloadFile(String urlString, String imageName)
     {
 
         try {
-            MyLog.e(urlString);
+
             URL url =  new URL(urlString);
             URLConnection conn = url.openConnection();
             conn.setRequestProperty("User-Agent","Mozilla/4.0 (compatible; MSIE 5.0; Windows XP; DigExt)");
@@ -31,14 +31,22 @@ public class FileUtil {
                 fileOutputStream.write(buffer, 0, length);
             }
 
+            MyLog.e(urlString+" 下载完成,\n路径:" +imageName);
+
+
+
             dataInputStream.close();
             fileOutputStream.close();
+            return true;
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+            MyLog.e(urlString+" 下载失败");
         } catch (IOException e) {
             e.printStackTrace();
+            MyLog.e(urlString+" 下载失败");
         }
+        return false;
         /*URL urlfile = null;
         HttpURLConnection httpUrl = null;
         BufferedInputStream bis = null;

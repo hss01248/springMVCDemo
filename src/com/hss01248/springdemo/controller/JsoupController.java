@@ -59,7 +59,7 @@ public class JsoupController {
     }
 
     public static void main(String[] args){
-        int[] list = new int[]{
+        /*int[] list = new int[]{
                // 1193001,1036491,453685,9117151,9117151,1798981,1215091,2838911,392921
                 //14870692,15003911,14988021,15477592,15154512,15019462,15017532,15029072
                 //15011622,15091412,15011212,15201362,15091082,15011162,427021,367466
@@ -67,25 +67,156 @@ public class JsoupController {
                 //428950,83036,860271,786111,2762991,434061,1571422,1640991,312316,1677972,561811,2136732,607121,1153671,1997132
                 //342283,51617,33646,35987,3260771,2808591,2337142,6710822,2012462,1622012,1767051,460055,8489031,467684
                7093312,3698792,1428971,1434951,228277,1141951,241009,8559531,2814471,1089721,874861,4703181,4677631,1265581,7151042,1434621 //asian
-        };
+        };*/
 
-        for(int id : list){
-            getPicUrls(id+"");
+
+        String[] str = "Tits,Ass,Amateur,Dick,Hot,Teen,Hentai,Sex,Boobs,Babe,Cum,Blonde,Blowjob,Anal,Black,Brunette,Asian,MILF,Cumshot,pov,Pissing,Webcam,Shemale".toLowerCase().split(",");
+       // MyLog.i(Arrays.asList(str).toString());
+
+       /* for(String tag : str){
+            int pageCount = 21;
+            netPachong(pageCount, tag);
+        }*/
+
+        int pageCount = 21;
+        String tag = "blonde";
+        netPachong(pageCount, tag);
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+    /**
+     * 三层循环,怎么处理
+     *
+     * @param pageCount
+     * @param tag
+     */
+    private static void netPachong(int pageCount, String tag) {
+
+        long succesCount = 0;
+        long failCount = 0;
+        long totalCount =0;
+
+        for (int i = 1; i < pageCount; i++) {
+            ArrayList<String> ids = getIdsByTag(tag,i);
+            downloadList(ids,tag);
+        }
+    }
+
+    private static ArrayList<String> getIdsByTag(String tag, int page) {
+        //http://www.pornhub.com/albums/female-male-misc-shemale-straight-uncategorized?search=amateur&o=mv&t=a&page=2
+        String url = "http://www.pornhub.com/albums/female-male-misc-shemale-straight-uncategorized";
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(url)
+                    .data("search",tag)
+                    .data("o","mv")
+                    .data("t","a")
+                    .data("page",page+"")
+                    .get();
+
+
+            ArrayList<String> ids = new ArrayList<>();
+            Elements folder = doc.select("div.photoAlbumListBlock"); // 具有 href 属性的链接
+            for(Element element :folder){
+                String uri =  element.select("a").attr("href");
+                MyLog.i("本相册点进去的url为:"+uri);
+                /*String id = uri.substring(uri.indexOf("id=")+3);
+                MyLog.i("本相册点进去的id为:"+id);*/
+
+                String countStr =   element.select(".album-photo-counter").text();
+                MyLog.i("本相册有图片数为:"+countStr);
+                String co = countStr.substring(0,countStr.indexOf(" "));
+                int count = Integer.parseInt(co);
+                MyLog.i("本相册有图片数为(截取后):"+count);
+
+                if(count >5){
+                    ids.add(uri);
+                }
+            }
+            MyLog.i(tag+"的第"+page+"页有"+ids.size()+"个album符合图片多于5张的要求");
+
+            return ids;
+
+
+
+
+
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
 
 
     }
 
-    private static void getPicUrls(String id) {
-         String picUrl = "http://www.pornhub.com/album/show_album";
+
+    private static void downloadList(ArrayList<String> list,final String tag) {
+        for(String id : list){
+
+            final String theId = id;
+            //file.createNewFile();
+            ThreadPoolFactory.getDownLoadPool().execute(new Runnable() {
+                @Override
+                public void run() {
+                    getPicUrls(theId,tag);
+                }
+            });
+
+        }
+    }
+
+
+    /**
+     *
+     * @param id
+     * @param tag
+     */
+    private static void getPicUrls(String id,String tag) {
+         //String picUrl = "http://www.pornhub.com/album/show_album";
+
+        if(tag.equalsIgnoreCase("amateur") && id.contains("show_album")){
+            return;
+        }
+
+
+
+
+        String picUrl = "http://www.pornhub.com"+id;
         Document doc = null;
         try {
             doc = Jsoup.connect(picUrl)
-                    .data("id",id)
+                   // .data("id",id)
                     .get();
+
+
+
         } catch (IOException e) {
             e.printStackTrace();
+            try {
+                doc = Jsoup.connect("http://www.pornhub.com/album/show_album")
+                        .data("id",id)
+                        .get();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                return;
+            }
+
         }
+
 
         String title = doc.title();
 
@@ -100,25 +231,27 @@ public class JsoupController {
 
         for(Element element: links){
             String style=  element.attr("style");
+            MyLog.i(title+"-----style标签:"+style);
             //background-image: url('http://i1.cdn2b.image.pornhub.phncdn.com/pics/albums/000/237/566/2360976/(m=eiJ_8b)original_2360976.jpg')
             String pic = style.substring(style.indexOf("('")+2,style.indexOf("')"));
             pic = pic.replace("m=eiJ_8b","m=e-yaaGqaa").trim();
-            MyLog.i("解析到一张图片地址:"+pic);
+            MyLog.i(title+"-----解析到一张图片地址:"+pic);
             pics.add(pic);
 
         }
 
-        download(pics,title);
-        MyLog.i("拿到的节点数目:"+size);
-        MyLog.i("标题:"+title);
-        MyLog.i("下载完成:");
+        download(pics,title,tag);
+        MyLog.i(title+"-----------拿到的图片数目:"+size);
+
+
 
 
     }
 
-    private static void download(List<String> pics,String title) {
+    private static void download(List<String> pics,String title,String tag) {
+        title= title.replaceAll(":","");
 
-        String root = "F:\\pics\\00asian" + File.separator+title;
+        String root = "F:\\pics" + File.separator+tag+ File.separator+title;
         File dir = new File(root);
         if(!dir.exists()){
             dir.mkdirs();
@@ -135,13 +268,14 @@ public class JsoupController {
             }
             final String pic1 = pic;
             final File file = new File(dir,filename);
-            MyLog.i("文件路径:"+file.getAbsolutePath());
+           MyLog.i("文件路径:"+file.getAbsolutePath());
 
 
                     //file.createNewFile();
                     ThreadPoolFactory.getDownLoadPool().execute(new Runnable() {
                         @Override
                         public void run() {
+
                             FileUtil.downloadFile(pic1,file.getAbsolutePath());
                         }
                     });
